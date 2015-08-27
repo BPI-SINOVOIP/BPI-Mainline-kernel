@@ -56,13 +56,26 @@
 #include <dt-bindings/pinctrl/sun4i-a10.h>
 
 / {
-	model = "Banana Pi BPI-M1";
-	compatible = "sinovoip,bpi-m1", "allwinner,sun7i-a20";
+	model = "Banana Pi BPI-R1";
+	compatible = "sinovoip,bpi-r1", "allwinner,sun7i-a20";
 
 	aliases {
 		serial0 = &uart0;
 		serial1 = &uart3;
 		serial2 = &uart7;
+	};
+
+
+	leds {
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&led_pins_bananapi>;
+
+		green {
+			label = "bananapi:green:usr";
+			gpios = <&pio 7 2 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+		};
 	};
 
 	soc@01c00000 {
@@ -115,7 +128,7 @@
 				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 				allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
 			};
-
+			
 			gmac_power_pin_bananapi: gmac_power_pin@0 {
 				allwinner,pins = "PH23";
 				allwinner,function = "gpio_out";
@@ -124,7 +137,7 @@
 			};
 
 			led_pins_bananapi: led_pins@0 {
-				allwinner,pins = "PH24";
+				allwinner,pins = "PH2";
 				allwinner,function = "gpio_out";
 				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
@@ -191,17 +204,6 @@
 		};
 	};
 
-	leds {
-		compatible = "gpio-leds";
-		pinctrl-names = "default";
-		pinctrl-0 = <&led_pins_bananapi>;
-
-		green {
-			label = "bananapi:green:usr";
-			gpios = <&pio 7 24 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "heartbeat";
-		};
-	};
 
 	reg_usb1_vbus: usb1-vbus {
 		status = "okay";

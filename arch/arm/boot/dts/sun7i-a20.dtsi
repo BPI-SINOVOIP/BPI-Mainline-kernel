@@ -948,7 +948,7 @@
 				allwinner,pins = "PI4","PI5","PI6","PI7","PI8","PI9";
 				allwinner,function = "mmc3";
 				allwinner,drive = <SUN4I_PINCTRL_30_MA>;
-				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+				allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
 			};
 
 			ir0_pins_a: ir0@0 {

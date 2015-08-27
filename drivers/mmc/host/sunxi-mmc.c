@@ -243,6 +243,7 @@ struct sunxi_mmc_host {
 	bool		wait_dma;
 
 	struct mmc_request *mrq;
+		struct mmc_request *mrq_cmd53;
 	struct mmc_request *manual_stop_mrq;
 	int		ferror;
 };
@@ -448,6 +449,7 @@ static irqreturn_t sunxi_mmc_finalize_request(struct sunxi_mmc_host *host)
 	struct mmc_request *mrq = host->mrq;
 	struct mmc_data *data = mrq->data;
 	u32 rval;
+		u32 opcode = 0;
 
 	mmc_writel(host, REG_IMASK, host->sdio_imask);
 	mmc_writel(host, REG_IDIE, 0);
@@ -493,11 +495,15 @@ static irqreturn_t sunxi_mmc_finalize_request(struct sunxi_mmc_host *host)
 
 	mmc_writel(host, REG_RINTR, 0xffff);
 
-	host->mrq = NULL;
-	host->int_sum = 0;
-	host->wait_dma = false;
+		opcode = host->mrq->cmd->opcode;
+		if(opcode == 53){
+			host->mrq_cmd53 = host->mrq;
+		}
+        host->mrq = NULL;
+        host->int_sum = 0;
+        host->wait_dma = false;
 
-	return host->manual_stop_mrq ? IRQ_WAKE_THREAD : IRQ_HANDLED;
+        return ((host->manual_stop_mrq)||(opcode==53)) ? IRQ_WAKE_THREAD : IRQ_HANDLED;
 }
 
 static irqreturn_t sunxi_mmc_irq(int irq, void *dev_id)
@@ -557,17 +563,51 @@ static irqreturn_t sunxi_mmc_irq(int irq, void *dev_id)
 	return ret;
 }
 
+
+int sunxi_check_r1_ready(struct sunxi_mmc_host *smc_host, unsigned ms)
+{
+	//struct sunxi_mmc_host *smc_host = mmc_priv(mmc);
+	unsigned long expire = jiffies + msecs_to_jiffies(ms);
+	//dev_info(mmc_dev(smc_host->mmc), "wrd\n");
+	do {
+		if (!(mmc_readl(smc_host, REG_STAS) & SDXC_CARD_DATA_BUSY))
+			break;
+	} while (time_before(jiffies, expire));
+
+	if ((mmc_readl(smc_host, REG_STAS) & SDXC_CARD_DATA_BUSY)) {
+		dev_err(mmc_dev(smc_host->mmc), "wait r1 rdy %d ms timeout\n", ms);
+		return -1;
+	} else{
+		return 0;
+	}
+}
+
+
+
 static irqreturn_t sunxi_mmc_handle_manual_stop(int irq, void *dev_id)
 {
 	struct sunxi_mmc_host *host = dev_id;
 	struct mmc_request *mrq;
+		struct mmc_request *mrq_cmd53 = NULL;
 	unsigned long iflags;
 
 	spin_lock_irqsave(&host->lock, iflags);
 	mrq = host->manual_stop_mrq;
+		mrq_cmd53 = host->mrq_cmd53;
 	spin_unlock_irqrestore(&host->lock, iflags);
 
-	if (!mrq) {
+        if (mrq_cmd53) {
+				sunxi_check_r1_ready(host,1000);
+        		spin_lock_irqsave(&host->lock, iflags);				
+				host->mrq_cmd53 = NULL;
+      			spin_unlock_irqrestore(&host->lock, iflags);				
+				mmc_request_done(host->mmc, mrq_cmd53);
+				return IRQ_HANDLED;		
+        }else{
+			dev_err(mmc_dev(host->mmc), "no request for cmd53 busy\n");
+		}
+
+        if (!mrq) {
 		dev_err(mmc_dev(host->mmc), "no request for manual stop\n");
 		return IRQ_HANDLED;
 	}
