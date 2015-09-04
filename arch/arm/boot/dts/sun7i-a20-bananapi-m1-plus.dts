@@ -185,15 +185,18 @@
 	vmmc-supply = <&reg_vmmc3>;
 	bus-width = <4>;
 	non-removable;
+	enable-sdio-wakeup;
 	status = "okay";
 
+/*
 	brcmf: bcrmf@1 {
 		reg = <1>;
 		compatible = "brcm,bcm4329-fmac";
 		interrupt-parent = <&pio>;
-		interrupts = <15 8>; /* PH15 / EINT15 */
+		interrupts = <15 8>; 
 		interrupt-names = "host-wake";
 	};
+*/
 };
 
 &pio {
