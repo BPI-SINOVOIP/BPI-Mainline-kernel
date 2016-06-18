@@ -14,6 +14,7 @@
 
 #include <linux/leds.h>
 #include <linux/ctype.h>
+#include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/workqueue.h>
 
