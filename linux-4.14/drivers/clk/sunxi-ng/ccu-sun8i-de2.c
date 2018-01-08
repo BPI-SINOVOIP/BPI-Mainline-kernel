@@ -17,6 +17,7 @@
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/reset.h>
+#include <linux/soc/sunxi/sunxi_sram.h>
 
 #include "ccu_common.h"
 #include "ccu_div.h"
@@ -46,7 +47,28 @@ static SUNXI_CCU_M(mixer1_div_clk, "mixer1-div", "de", 0x0c, 4, 4,
 static SUNXI_CCU_M(wb_div_clk, "wb-div", "de", 0x0c, 8, 4,
 		   CLK_SET_RATE_PARENT);
 
+static SUNXI_CCU_M(mixer0_div_a83_clk, "mixer0-div", "pll-de", 0x0c, 0, 4,
+		   CLK_SET_RATE_PARENT);
+static SUNXI_CCU_M(mixer1_div_a83_clk, "mixer1-div", "pll-de", 0x0c, 4, 4,
+		   CLK_SET_RATE_PARENT);
+static SUNXI_CCU_M(wb_div_a83_clk, "wb-div", "pll-de", 0x0c, 8, 4,
+		   CLK_SET_RATE_PARENT);
+
 static struct ccu_common *sun8i_a83t_de2_clks[] = {
+	&mixer0_clk.common,
+	&mixer1_clk.common,
+	&wb_clk.common,
+
+	&bus_mixer0_clk.common,
+	&bus_mixer1_clk.common,
+	&bus_wb_clk.common,
+
+	&mixer0_div_a83_clk.common,
+	&mixer1_div_a83_clk.common,
+	&wb_div_a83_clk.common,
+};
+
+static struct ccu_common *sun8i_h3_de2_clks[] = {
 	&mixer0_clk.common,
 	&mixer1_clk.common,
 	&wb_clk.common,
@@ -72,6 +94,23 @@ static struct ccu_common *sun8i_v3s_de2_clks[] = {
 };
 
 static struct clk_hw_onecell_data sun8i_a83t_de2_hw_clks = {
+	.hws	= {
+		[CLK_MIXER0]		= &mixer0_clk.common.hw,
+		[CLK_MIXER1]		= &mixer1_clk.common.hw,
+		[CLK_WB]		= &wb_clk.common.hw,
+
+		[CLK_BUS_MIXER0]	= &bus_mixer0_clk.common.hw,
+		[CLK_BUS_MIXER1]	= &bus_mixer1_clk.common.hw,
+		[CLK_BUS_WB]		= &bus_wb_clk.common.hw,
+
+		[CLK_MIXER0_DIV]	= &mixer0_div_a83_clk.common.hw,
+		[CLK_MIXER1_DIV]	= &mixer1_div_a83_clk.common.hw,
+		[CLK_WB_DIV]		= &wb_div_a83_clk.common.hw,
+	},
+	.num	= CLK_NUMBER,
+};
+
+static struct clk_hw_onecell_data sun8i_h3_de2_hw_clks = {
 	.hws	= {
 		[CLK_MIXER0]		= &mixer0_clk.common.hw,
 		[CLK_MIXER1]		= &mixer1_clk.common.hw,
@@ -128,11 +167,21 @@ static const struct sunxi_ccu_desc sun8i_a83t_de2_clk_desc = {
 	.num_resets	= ARRAY_SIZE(sun8i_a83t_de2_resets),
 };
 
-static const struct sunxi_ccu_desc sun50i_a64_de2_clk_desc = {
-	.ccu_clks	= sun8i_a83t_de2_clks,
-	.num_ccu_clks	= ARRAY_SIZE(sun8i_a83t_de2_clks),
+static const struct sunxi_ccu_desc sun8i_h3_de2_clk_desc = {
+	.ccu_clks	= sun8i_h3_de2_clks,
+	.num_ccu_clks	= ARRAY_SIZE(sun8i_h3_de2_clks),
 
-	.hw_clks	= &sun8i_a83t_de2_hw_clks,
+	.hw_clks	= &sun8i_h3_de2_hw_clks,
+
+	.resets		= sun8i_a83t_de2_resets,
+	.num_resets	= ARRAY_SIZE(sun8i_a83t_de2_resets),
+};
+
+static const struct sunxi_ccu_desc sun50i_a64_de2_clk_desc = {
+	.ccu_clks	= sun8i_h3_de2_clks,
+	.num_ccu_clks	= ARRAY_SIZE(sun8i_h3_de2_clks),
+
+	.hw_clks	= &sun8i_h3_de2_hw_clks,
 
 	.resets		= sun50i_a64_de2_resets,
 	.num_resets	= ARRAY_SIZE(sun50i_a64_de2_resets),
@@ -147,6 +196,11 @@ static const struct sunxi_ccu_desc sun8i_v3s_de2_clk_desc = {
 	.resets		= sun8i_a83t_de2_resets,
 	.num_resets	= ARRAY_SIZE(sun8i_a83t_de2_resets),
 };
+
+static bool sunxi_de2_clk_has_sram(const struct device_node *node)
+{
+	return of_device_is_compatible(node, "allwinner,sun50i-a64-de2-clk");
+}
 
 static int sunxi_de2_clk_probe(struct platform_device *pdev)
 {
@@ -191,11 +245,20 @@ static int sunxi_de2_clk_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	if (sunxi_de2_clk_has_sram(pdev->dev.of_node)) {
+		ret = sunxi_sram_claim(&pdev->dev);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"Error couldn't map SRAM to device\n");
+			return ret;
+		}
+	}
+
 	/* The clocks need to be enabled for us to access the registers */
 	ret = clk_prepare_enable(bus_clk);
 	if (ret) {
 		dev_err(&pdev->dev, "Couldn't enable bus clk: %d\n", ret);
-		return ret;
+		goto err_release_sram;
 	}
 
 	ret = clk_prepare_enable(mod_clk);
@@ -224,6 +287,10 @@ err_disable_mod_clk:
 	clk_disable_unprepare(mod_clk);
 err_disable_bus_clk:
 	clk_disable_unprepare(bus_clk);
+err_release_sram:
+	if (sunxi_de2_clk_has_sram(pdev->dev.of_node))
+		sunxi_sram_release(&pdev->dev);
+
 	return ret;
 }
 
@@ -233,20 +300,21 @@ static const struct of_device_id sunxi_de2_clk_ids[] = {
 		.data = &sun8i_a83t_de2_clk_desc,
 	},
 	{
+		.compatible = "allwinner,sun8i-h3-de2-clk",
+		.data = &sun8i_h3_de2_clk_desc,
+	},
+	{
 		.compatible = "allwinner,sun8i-v3s-de2-clk",
 		.data = &sun8i_v3s_de2_clk_desc,
+	},
+	{
+		.compatible = "allwinner,sun50i-a64-de2-clk",
+		.data = &sun50i_a64_de2_clk_desc,
 	},
 	{
 		.compatible = "allwinner,sun50i-h5-de2-clk",
 		.data = &sun50i_a64_de2_clk_desc,
 	},
-	/*
-	 * The Allwinner A64 SoC needs some bit to be poke in syscon to make
-	 * DE2 really working.
-	 * So there's currently no A64 compatible here.
-	 * H5 shares the same reset line with A64, so here H5 is using the
-	 * clock description of A64.
-	 */
 	{ }
 };
 
