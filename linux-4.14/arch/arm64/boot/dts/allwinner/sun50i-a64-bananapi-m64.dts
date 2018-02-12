@@ -47,7 +47,7 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	model = "BananaPi-M64";
+	model = "Banana Pi BPI-M64";
 	compatible = "sinovoip,bananapi-m64", "allwinner,sun50i-a64";
 
 	aliases {
@@ -81,9 +81,8 @@
 &emac {
 	pinctrl-names = "default";
 	pinctrl-0 = <&rgmii_pins>;
-	phy-mode = "rgmii";
+	phy-mode = "rgmii-txid";
 	phy-handle = <&ext_rgmii_phy>;
-	phy-supply = <&reg_dc1sw>;
 	status = "okay";
 };
 
@@ -102,7 +101,7 @@
 	bias-pull-up;
 };
 
-&external_mdio {
+&mdio {
 	ext_rgmii_phy: ethernet-phy@1 {
 		compatible = "ethernet-phy-ieee802.3-c22";
 		reg = <1>;
@@ -173,6 +172,15 @@
 };
 
 #include "axp803.dtsi"
+
+&ac_power_supply {
+	status = "okay";
+};
+
+&battery_power_supply {
+	status = "okay";
+};
+
 
 &reg_aldo1 {
 	regulator-min-microvolt = <2800000>;
