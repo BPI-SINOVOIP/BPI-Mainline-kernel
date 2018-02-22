@@ -47,7 +47,7 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	model = "Banana Pi BPI-M64";
+	model = "BananaPi-M64";
 	compatible = "sinovoip,bananapi-m64", "allwinner,sun50i-a64";
 
 	aliases {

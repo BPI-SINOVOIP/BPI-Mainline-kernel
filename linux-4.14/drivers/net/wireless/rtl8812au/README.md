@@ -40,6 +40,7 @@ cd rtl*
 Package / Build dependencies
 ```
 sudo apt-get install build-essential
+sudo apt-get install bc
 sudo apt-get install linux-headers-`uname -r`
 ```
 For setting monitor mode
@@ -69,7 +70,8 @@ or
 ```
 sudo iw wlan0 set txpower fixed 3000
 ```
-For Ubuntu 17.04 add the following lines
+Newer versions of NetworkManager switches to random MAC address. Some users would prefer to use a fixed address. 
+Simply add these lines below
 ```
 [device]
 wifi.scan-rand-mac-address=no

@@ -1008,6 +1008,7 @@ static struct recv_buf *sd_recv_rxfifo(struct adapter *padapter, u32 size)
 		}
 
 		if (precvbuf->pskb == NULL) {
+			rtw_enqueue_recvbuf(precvbuf, &precvpriv->free_recv_buf_queue);
 			DBG_871X("%s: alloc_skb fail! read =%d\n", __func__, readsize);
 			return NULL;
 		}

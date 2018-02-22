@@ -686,6 +686,24 @@ static inline int is_loop_device(struct file *file)
 	return i && S_ISBLK(i->i_mode) && MAJOR(i->i_rdev) == LOOP_MAJOR;
 }
 
+/*
+ * for AUFS
+ * no get/put for file.
+ */
+struct file *loop_backing_file(struct super_block *sb)
+{
+	struct file *ret;
+	struct loop_device *l;
+
+	ret = NULL;
+	if (MAJOR(sb->s_dev) == LOOP_MAJOR) {
+		l = sb->s_bdev->bd_disk->private_data;
+		ret = l->lo_backing_file;
+	}
+	return ret;
+}
+EXPORT_SYMBOL_GPL(loop_backing_file);
+
 /* loop sysfs attributes */
 
 static ssize_t loop_attr_show(struct device *dev, char *page,
@@ -1576,9 +1594,8 @@ out:
 	return err;
 }
 
-static void lo_release(struct gendisk *disk, fmode_t mode)
+static void __lo_release(struct loop_device *lo)
 {
-	struct loop_device *lo = disk->private_data;
 	int err;
 
 	if (atomic_dec_return(&lo->lo_refcnt))
@@ -1603,6 +1620,13 @@ static void lo_release(struct gendisk *disk, fmode_t mode)
 	}
 
 	mutex_unlock(&lo->lo_ctl_mutex);
+}
+
+static void lo_release(struct gendisk *disk, fmode_t mode)
+{
+	mutex_lock(&loop_index_mutex);
+	__lo_release(disk->private_data);
+	mutex_unlock(&loop_index_mutex);
 }
 
 static const struct block_device_operations lo_fops = {

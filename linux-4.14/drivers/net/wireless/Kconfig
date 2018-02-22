@@ -31,26 +31,26 @@ config WIRELESS_WDS
 	  necessary, give up on our plan of removing it).
 
 source "drivers/net/wireless/admtek/Kconfig"
+source "drivers/net/wireless/rtl8189es/Kconfig"
 source "drivers/net/wireless/ath/Kconfig"
+source "drivers/net/wireless/rtl8188eu/Kconfig"
 source "drivers/net/wireless/atmel/Kconfig"
 source "drivers/net/wireless/broadcom/Kconfig"
 source "drivers/net/wireless/cisco/Kconfig"
 source "drivers/net/wireless/intel/Kconfig"
 source "drivers/net/wireless/intersil/Kconfig"
 source "drivers/net/wireless/marvell/Kconfig"
+source "drivers/net/wireless/rtl8812au/Kconfig"
+source "drivers/net/wireless/rtl8814au/Kconfig"
 source "drivers/net/wireless/mediatek/Kconfig"
 source "drivers/net/wireless/ralink/Kconfig"
 source "drivers/net/wireless/realtek/Kconfig"
 source "drivers/net/wireless/rsi/Kconfig"
 source "drivers/net/wireless/st/Kconfig"
 source "drivers/net/wireless/ti/Kconfig"
+source "drivers/net/wireless/xradio/Kconfig"
 source "drivers/net/wireless/zydas/Kconfig"
 source "drivers/net/wireless/quantenna/Kconfig"
-source "drivers/net/wireless/rtl8812au/Kconfig"
-source "drivers/net/wireless/rtl8814au/Kconfig"
-source "drivers/net/wireless/rtl8189es/Kconfig"
-source "drivers/net/wireless/xradio/Kconfig"
-
 
 config PCMCIA_RAYCS
 	tristate "Aviator/Raytheon 2.4GHz wireless support"

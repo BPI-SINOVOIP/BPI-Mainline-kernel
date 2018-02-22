@@ -3,4 +3,3 @@ config RTL8814AU
 	depends on USB
 	---help---
 	  Help message of RTL8814AU
-

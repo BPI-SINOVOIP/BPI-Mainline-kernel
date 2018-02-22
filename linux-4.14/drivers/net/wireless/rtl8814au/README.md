@@ -1,20 +1,6 @@
 # RTL8812AU/21AU and RTL8814AU drivers
 # with monitor mode and frame injection
 
-## TODO
-These are the problems that needs attention, any help would be appreciated.
-```
-* "Associate", "Disassocate" & "Deauthenticate" support is missing. 
-  These should be added in order to get some functions working, like "deauth" attacks.
-  Check issue report @ https://github.com/aircrack-ng/rtl8814au/issues/35
-
-* txpower control has been added, but some issues remain.
-  Check issue reports for more information.
-  
-* RadioTap FCS flag is set, but frame does not contain FCS.
-  Check issue report @ https://github.com/aircrack-ng/rtl8814au/issues/28
-
-```
 ## DKMS
 This driver can be installed using [DKMS]. This is a system which will automatically recompile and install a kernel module when a new kernel gets installed or updated. To make use of DKMS, install the `dkms` package, which on Debian (based) systems is done like this:
 ```
@@ -54,6 +40,7 @@ cd rtl*
 Package / Build dependencies
 ```
 sudo apt-get install build-essential
+sudo apt-get install bc
 sudo apt-get install linux-headers-`uname -r`
 ```
 For setting monitor mode
@@ -83,7 +70,8 @@ or
 ```
 sudo iw wlan0 set txpower fixed 3000
 ```
-For Ubuntu 17.04 add the following lines
+Newer versions of NetworkManager switches to random MAC address. Some users would prefer to use a fixed address. 
+Simply add these lines below
 ```
 [device]
 wifi.scan-rand-mac-address=no

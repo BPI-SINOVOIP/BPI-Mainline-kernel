@@ -136,7 +136,7 @@ static int rtl8211e_config_init(struct phy_device *phydev)
 
 	if (phydev->interface == PHY_INTERFACE_MODE_RGMII_TXID) {
 		/*
-		 * Disable the RX internal delay here. (BPI-M64)
+		 * Disable the RX internal delay here.
 		 *
 		 * All the magic numbers are not documented on RTL8211E
 		 * datasheet. They're said to be from Realtek by Pine64.
