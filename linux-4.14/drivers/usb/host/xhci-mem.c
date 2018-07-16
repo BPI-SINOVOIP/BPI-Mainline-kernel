@@ -891,11 +891,11 @@ void xhci_free_virt_device(struct xhci_hcd *xhci, int slot_id)
 
 	dev = xhci->devs[slot_id];
 
-	trace_xhci_free_virt_device(dev);
-
 	xhci->dcbaa->dev_context_ptrs[slot_id] = 0;
 	if (!dev)
 		return;
+
+	trace_xhci_free_virt_device(dev);
 
 	if (dev->tt_info)
 		old_active_eps = dev->tt_info->active_eps;
@@ -926,6 +926,8 @@ void xhci_free_virt_device(struct xhci_hcd *xhci, int slot_id)
 	if (dev->out_ctx)
 		xhci_free_container_ctx(xhci, dev->out_ctx);
 
+	if (dev->udev && dev->udev->slot_id)
+		dev->udev->slot_id = 0;
 	kfree(xhci->devs[slot_id]);
 	xhci->devs[slot_id] = NULL;
 }

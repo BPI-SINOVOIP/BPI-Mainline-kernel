@@ -2465,19 +2465,6 @@ F:	include/linux/audit.h
 F:	include/uapi/linux/audit.h
 F:	kernel/audit*
 
-AUFS (advanced multi layered unification filesystem) FILESYSTEM
-M:	"J. R. Okajima" <hooanon05g@gmail.com>
-L:	linux-unionfs@vger.kernel.org
-L:	aufs-users@lists.sourceforge.net (members only)
-W:	http://aufs.sourceforge.net
-T:	git://github.com/sfjro/aufs4-linux.git
-S:	Supported
-F:	Documentation/filesystems/aufs/
-F:	Documentation/ABI/testing/debugfs-aufs
-F:	Documentation/ABI/testing/sysfs-aufs
-F:	fs/aufs/
-F:	include/uapi/linux/aufs_type.h
-
 AUXILIARY DISPLAY DRIVERS
 M:	Miguel Ojeda Sandonis <miguel.ojeda.sandonis@gmail.com>
 W:	http://miguelojeda.es/auxdisplay.htm
@@ -7683,16 +7670,6 @@ F:	include/linux/kdb.h
 F:	include/linux/kgdb.h
 F:	kernel/debug/
 
-KMEMCHECK
-M:	Vegard Nossum <vegardno@ifi.uio.no>
-M:	Pekka Enberg <penberg@kernel.org>
-S:	Maintained
-F:	Documentation/dev-tools/kmemcheck.rst
-F:	arch/x86/include/asm/kmemcheck.h
-F:	arch/x86/mm/kmemcheck/
-F:	include/linux/kmemcheck.h
-F:	mm/kmemcheck.c
-
 KMEMLEAK
 M:	Catalin Marinas <catalin.marinas@arm.com>
 S:	Maintained
@@ -9024,6 +9001,7 @@ MIPS GENERIC PLATFORM
 M:	Paul Burton <paul.burton@mips.com>
 L:	linux-mips@linux-mips.org
 S:	Supported
+F:	Documentation/devicetree/bindings/power/mti,mips-cpc.txt
 F:	arch/mips/generic/
 F:	arch/mips/tools/generic-board-config.sh
 

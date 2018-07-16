@@ -35,8 +35,9 @@
 #define CLK_PLL_PERIPH0_2X	10
 #define CLK_PLL_GPU		11
 #define CLK_PLL_PERIPH1		12
+#define CLK_PLL_DE		13
 
-/* The PLL_DE and CPUX clocks is exported */
+/* The CPUX clock is exported */
 
 #define CLK_AXI			15
 #define CLK_AHB1		16

@@ -721,11 +721,13 @@ static int spidev_probe(struct spi_device *spi)
 
 	/*
 	 * spidev should never be referenced in DT without a specific
-	 * compatible string, but people don't care and use DT overlays
-	 * to activate SPIdev on demand
+	 * compatible string, it is a Linux implementation thing
+	 * rather than a description of the hardware.
 	 */
 	if (spi->dev.of_node && !of_match_device(spidev_dt_ids, &spi->dev)) {
-		dev_info(&spi->dev, "probing from DT");
+		dev_err(&spi->dev, "buggy DT: spidev listed directly in DT\n");
+		WARN_ON(spi->dev.of_node &&
+			!of_match_device(spidev_dt_ids, &spi->dev));
 	}
 
 	spidev_probe_acpi(spi);

@@ -142,7 +142,7 @@ EXPORT_SYMBOL_GPL(drm_gem_cma_create);
  * A struct drm_gem_cma_object * on success or an ERR_PTR()-encoded negative
  * error code on failure.
  */
-struct drm_gem_cma_object *
+static struct drm_gem_cma_object *
 drm_gem_cma_create_with_handle(struct drm_file *file_priv,
 			       struct drm_device *drm, size_t size,
 			       uint32_t *handle)
@@ -169,7 +169,6 @@ drm_gem_cma_create_with_handle(struct drm_file *file_priv,
 
 	return cma_obj;
 }
-EXPORT_SYMBOL_GPL(drm_gem_cma_create_with_handle);
 
 /**
  * drm_gem_cma_free_object - free resources associated with a CMA GEM object

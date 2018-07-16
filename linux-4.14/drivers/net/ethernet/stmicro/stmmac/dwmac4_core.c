@@ -562,10 +562,12 @@ static int dwmac4_irq_status(struct mac_device_info *hw,
 			     struct stmmac_extra_stats *x)
 {
 	void __iomem *ioaddr = hw->pcsr;
-	u32 intr_status;
+	u32 intr_status = readl(ioaddr + GMAC_INT_STATUS);
+	u32 intr_enable = readl(ioaddr + GMAC_INT_EN);
 	int ret = 0;
 
-	intr_status = readl(ioaddr + GMAC_INT_STATUS);
+	/* Discard disabled bits */
+	intr_status &= intr_enable;
 
 	/* Not used events (e.g. MMC interrupts) are not handled. */
 	if ((intr_status & mmc_tx_irq))
@@ -578,25 +580,6 @@ static int dwmac4_irq_status(struct mac_device_info *hw,
 	if (unlikely(intr_status & pmt_irq)) {
 		readl(ioaddr + GMAC_PMT);
 		x->irq_receive_pmt_irq_n++;
-	}
-
-	/* MAC tx/rx EEE LPI entry/exit interrupts */
-	if (intr_status & lpi_irq) {
-		/* Clear LPI interrupt by reading MAC_LPI_Control_Status */
-		u32 status = readl(ioaddr + GMAC4_LPI_CTRL_STATUS);
-
-		if (status & GMAC4_LPI_CTRL_STATUS_TLPIEN) {
-			ret |= CORE_IRQ_TX_PATH_IN_LPI_MODE;
-			x->irq_tx_path_in_lpi_mode_n++;
-		}
-		if (status & GMAC4_LPI_CTRL_STATUS_TLPIEX) {
-			ret |= CORE_IRQ_TX_PATH_EXIT_LPI_MODE;
-			x->irq_tx_path_exit_lpi_mode_n++;
-		}
-		if (status & GMAC4_LPI_CTRL_STATUS_RLPIEN)
-			x->irq_rx_path_in_lpi_mode_n++;
-		if (status & GMAC4_LPI_CTRL_STATUS_RLPIEX)
-			x->irq_rx_path_exit_lpi_mode_n++;
 	}
 
 	dwmac_pcs_isr(ioaddr, GMAC_PCS_BASE, intr_status, x);

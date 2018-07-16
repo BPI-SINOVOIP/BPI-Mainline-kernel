@@ -61,17 +61,6 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	connector {
-		compatible = "hdmi-connector";
-		type = "a";
-
-		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
-			};
-		};
-	};
-
 	leds {
 		compatible = "gpio-leds";
 		pinctrl-names = "default";
@@ -100,31 +89,6 @@
 			gpios = <&r_pio 0 3 GPIO_ACTIVE_LOW>;
 		};
 	};
-
-	reg_sy8113b: gpio-regulator {
-		compatible = "regulator-gpio";
-		regulator-name = "vdd-cpux";
-		regulator-type = "voltage";
-		regulator-boot-on;
-		regulator-always-on;
-		regulator-min-microvolt = <1100000>;
-		regulator-max-microvolt = <1300000>;
-		regulator-ramp-delay = <50>; /* 4ms */
-
-		gpios = <&r_pio 0 6 GPIO_ACTIVE_HIGH>; /* PL6 */
-		enable-active-high;
-		gpios-states = <0x1>;
-		states = <1100000 0x0
-			  1300000 0x1>;
-	};
-};
-
-&cpu0 {
-	cpu-supply = <&reg_sy8113b>;
-};
-
-&de {
-	status = "okay";
 };
 
 &ehci1 {
@@ -135,27 +99,9 @@
 	status = "okay";
 };
 
-&hdmi {
-	status = "okay";
-};
-
-&hdmi_out {
-	hdmi_out_con: endpoint {
-		remote-endpoint = <&hdmi_con_in>;
-	};
-};
-
-&i2s2 {
-	status = "okay";
-};
-
 &ir {
 	pinctrl-names = "default";
 	pinctrl-0 = <&ir_pins_a>;
-	status = "okay";
-};
-
-&mixer0 {
 	status = "okay";
 };
 
@@ -211,14 +157,6 @@
 		pins = "PL3";
 		function = "gpio_in";
 	};
-};
-
-&sound_hdmi {
-	status = "okay";
-};
-
-&tcon0 {
-	status = "okay";
 };
 
 &uart0 {

@@ -47,7 +47,6 @@
 #include <linux/stringify.h>
 #include <linux/bitops.h>
 #include <linux/gfp.h>
-#include <linux/kmemcheck.h>
 #include <linux/random.h>
 #include <linux/jhash.h>
 
@@ -144,7 +143,7 @@ static struct lock_list list_entries[MAX_LOCKDEP_ENTRIES];
 unsigned long nr_lock_classes;
 static struct lock_class lock_classes[MAX_LOCKDEP_KEYS];
 
-inline struct lock_class *lockdep_hlock_class(struct held_lock *hlock)
+static inline struct lock_class *hlock_class(struct held_lock *hlock)
 {
 	if (!hlock->class_idx) {
 		/*
@@ -155,8 +154,6 @@ inline struct lock_class *lockdep_hlock_class(struct held_lock *hlock)
 	}
 	return lock_classes + hlock->class_idx - 1;
 }
-EXPORT_SYMBOL_GPL(lockdep_hlock_class);
-#define hlock_class(hlock) lockdep_hlock_class(hlock)
 
 #ifdef CONFIG_LOCK_STAT
 static DEFINE_PER_CPU(struct lock_class_stats[MAX_LOCKDEP_KEYS], cpu_lock_stats);
@@ -3227,8 +3224,6 @@ static void __lockdep_init_map(struct lockdep_map *lock, const char *name,
 {
 	int i;
 
-	kmemcheck_mark_initialized(lock, sizeof(*lock));
-
 	for (i = 0; i < NR_LOCKDEP_CACHING_CLASSES; i++)
 		lock->class_cache[i] = NULL;
 
@@ -4782,7 +4777,8 @@ void lockdep_invariant_state(bool force)
 	 * Verify the former, enforce the latter.
 	 */
 	WARN_ON_ONCE(!force && current->lockdep_depth);
-	invalidate_xhlock(&xhlock(current->xhlock_idx));
+	if (current->xhlocks)
+		invalidate_xhlock(&xhlock(current->xhlock_idx));
 }
 
 static int cross_lock(struct lockdep_map *lock)

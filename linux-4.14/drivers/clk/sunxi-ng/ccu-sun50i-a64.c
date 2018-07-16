@@ -513,7 +513,7 @@ static struct ccu_div tcon1_clk = {
 		.hw.init	= CLK_HW_INIT_PARENTS("tcon1",
 						      tcon1_parents,
 						      &ccu_div_ops,
-						      0),
+						      CLK_SET_RATE_PARENT),
 	},
 };
 
