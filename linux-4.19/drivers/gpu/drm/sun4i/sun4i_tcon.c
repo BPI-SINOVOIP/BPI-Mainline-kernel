@@ -35,6 +35,7 @@
 #include "sun4i_rgb.h"
 #include "sun4i_tcon.h"
 #include "sun6i_mipi_dsi.h"
+#include "sun8i_tcon_top.h"
 #include "sunxi_engine.h"
 
 static struct drm_connector *sun4i_tcon_get_connector(const struct drm_encoder *encoder)
@@ -880,6 +881,36 @@ static struct sunxi_engine *sun4i_tcon_get_engine_by_id(struct sun4i_drv *drv,
 	return ERR_PTR(-EINVAL);
 }
 
+static bool sun4i_tcon_connected_to_tcon_top(struct device_node *node)
+{
+	struct device_node *remote;
+	bool ret = false;
+
+	remote = of_graph_get_remote_node(node, 0, -1);
+	if (remote) {
+		ret = !!of_match_node(sun8i_tcon_top_of_table, remote);
+		of_node_put(remote);
+	}
+
+	return ret;
+}
+
+static int sun4i_tcon_get_index(struct sun4i_drv *drv)
+{
+	struct list_head *pos;
+	int size = 0;
+
+	/*
+	 * Because TCON is added to the list at the end of the probe
+	 * (after this function is called), index of the current TCON
+	 * will be same as current TCON list size.
+	 */
+	list_for_each(pos, &drv->tcon_list)
+		++size;
+
+	return size;
+}
+
 /*
  * On SoCs with the old display pipeline design (Display Engine 1.0),
  * we assumed the TCON was always tied to just one backend. However
@@ -928,8 +959,24 @@ static struct sunxi_engine *sun4i_tcon_find_engine(struct sun4i_drv *drv,
 	 * connections between the backend and TCON?
 	 */
 	if (of_get_child_count(port) > 1) {
-		/* Get our ID directly from an upstream endpoint */
-		int id = sun4i_tcon_of_get_id_from_port(port);
+		int id;
+
+		/*
+		 * When pipeline has the same number of TCONs and engines which
+		 * are represented by frontends/backends (DE1) or mixers (DE2),
+		 * we match them by their respective IDs. However, if pipeline
+		 * contains TCON TOP, chances are that there are either more
+		 * TCONs than engines (R40) or TCONs with non-consecutive ids.
+		 * (H6). In that case it's easier just use TCON index in list
+		 * as an id. That means that on R40, any 2 TCONs can be enabled
+		 * in DT out of 4 (there are 2 mixers). Due to the design of
+		 * TCON TOP, remaining 2 TCONs can't be connected to anything
+		 * anyway.
+		 */
+		if (sun4i_tcon_connected_to_tcon_top(node))
+			id = sun4i_tcon_get_index(drv);
+		else
+			id = sun4i_tcon_of_get_id_from_port(port);
 
 		/* Get our engine by matching our ID */
 		engine = sun4i_tcon_get_engine_by_id(drv, id);
@@ -1244,6 +1291,40 @@ static int sun6i_tcon_set_mux(struct sun4i_tcon *tcon,
 	return 0;
 }
 
+static int sun8i_r40_tcon_tv_set_mux(struct sun4i_tcon *tcon,
+				     const struct drm_encoder *encoder)
+{
+	struct device_node *port, *remote;
+	struct platform_device *pdev;
+	int id, ret;
+
+	/* find TCON TOP platform device and TCON id */
+
+	port = of_graph_get_port_by_id(tcon->dev->of_node, 0);
+	if (!port)
+		return -EINVAL;
+
+	id = sun4i_tcon_of_get_id_from_port(port);
+	of_node_put(port);
+
+	remote = of_graph_get_remote_node(tcon->dev->of_node, 0, -1);
+	if (!remote)
+		return -EINVAL;
+
+	pdev = of_find_device_by_node(remote);
+	of_node_put(remote);
+	if (!pdev)
+		return -EINVAL;
+
+	if (encoder->encoder_type == DRM_MODE_ENCODER_TMDS) {
+		ret = sun8i_tcon_top_set_hdmi_src(&pdev->dev, id);
+		if (ret)
+			return ret;
+	}
+
+	return sun8i_tcon_top_de_config(&pdev->dev, tcon->id, id);
+}
+
 static const struct sun4i_tcon_quirks sun4i_a10_quirks = {
 	.has_channel_0		= true,
 	.has_channel_1		= true,
@@ -1291,6 +1372,11 @@ static const struct sun4i_tcon_quirks sun8i_a83t_tv_quirks = {
 	.has_channel_1		= true,
 };
 
+static const struct sun4i_tcon_quirks sun8i_r40_tv_quirks = {
+	.has_channel_1		= true,
+	.set_mux		= sun8i_r40_tcon_tv_set_mux,
+};
+
 static const struct sun4i_tcon_quirks sun8i_v3s_quirks = {
 	.has_channel_0		= true,
 };
@@ -1315,6 +1401,7 @@ const struct of_device_id sun4i_tcon_of_table[] = {
 	{ .compatible = "allwinner,sun8i-a33-tcon", .data = &sun8i_a33_quirks },
 	{ .compatible = "allwinner,sun8i-a83t-tcon-lcd", .data = &sun8i_a83t_lcd_quirks },
 	{ .compatible = "allwinner,sun8i-a83t-tcon-tv", .data = &sun8i_a83t_tv_quirks },
+	{ .compatible = "allwinner,sun8i-r40-tcon-tv", .data = &sun8i_r40_tv_quirks },
 	{ .compatible = "allwinner,sun8i-v3s-tcon", .data = &sun8i_v3s_quirks },
 	{ .compatible = "allwinner,sun9i-a80-tcon-lcd", .data = &sun9i_a80_tcon_lcd_quirks },
 	{ .compatible = "allwinner,sun9i-a80-tcon-tv", .data = &sun9i_a80_tcon_tv_quirks },
