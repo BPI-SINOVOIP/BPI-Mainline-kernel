@@ -348,6 +348,11 @@
 				function = "i2c0";
 			};
 
+			i2c2_pins_a: i2c2@0 {
+				pins = "PB20", "PB21";
+				function = "i2c2";
+			};
+
 			mmc0_pins: mmc0-pins {
 				pins = "PF0", "PF1", "PF2",
 				       "PF3", "PF4", "PF5";

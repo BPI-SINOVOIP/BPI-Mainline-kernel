@@ -154,6 +154,12 @@
 	};
 };
 
+&i2c2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c2_pins_a>;
+	status = "okay";
+};
+
 #include "axp22x.dtsi"
 
 &mmc0 {
